@@ -12,7 +12,7 @@ import json
 import pymysql
 import tushare as ts
 
-cfg_file = os.path.join(os.path.dirname(__file__), 'data.cfg')
+cfg_file = os.path.join(os.path.dirname(__file__), 'conf' + os.sep + 'data.cfg')
 with open(cfg_file, 'r') as f:
     json_data = json.load(f)
 
