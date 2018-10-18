@@ -1,6 +1,4 @@
 # encoding: UTF-8
-# author: 微信号 rdex
-# author: 公众号 BlingBlingMoney
 import pymongo
 from PIL import Image
 import json
@@ -18,6 +16,10 @@ import time
 import random
 import requests
 
+__author__ = 'Roy T.Burns'
+# author: 微信号 pp_LoveSmile
+# author: 公众号 摸鱼网络
+
 from pyecharts import Bar, Pie, configure
 configure(output_image=True)
 
@@ -27,12 +29,14 @@ phantomjs_path = r'D:\devtools\phantomjs-2.1.1-windows\bin\phantomjs.exe'
 
 
 class RemoteExcel:
-    """对excel表格的操作
+    """
+    对excel表格的操作
 
     """
 
     def __init__(self, filename=None):
-        """初始化函数
+        """
+        初始化函数
 
         Args:
             filename: 要进行操作的文件名，如果存在此文件则打开，不存在则新建
@@ -54,7 +58,8 @@ class RemoteExcel:
             self.filename = ''
 
     def get_cell(self, row, col, sheet=None):
-        """读取单元格的内容
+        """
+        读取单元格的内容
 
         Args:
             row: 行
@@ -69,8 +74,9 @@ class RemoteExcel:
         return sht.Cells(row, col).Value
 
     def set_cell(self, sheet, row, col, value):
-        """向表格单元格写入
-
+        """
+        向表格单元格写入
+        
         Args:
             sheet: 表格名（不是文件名）
             row: 行
