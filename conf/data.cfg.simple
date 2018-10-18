@@ -1,0 +1,32 @@
+{
+    "MYSQL_HOST": "127.0.0.1", 
+    "MYSQL_PORT": "3306", 
+    "MYSQL_USER": "root", 
+    "MYSQL_PASSWORD": "111", 
+
+    "MYSQL_USER_Ali": "root", 
+    "MYSQL_PASSWORD_Ali": "111", 
+    "MYSQL_HOST_Ali": "127.0.0.1", 
+
+    "MYSQL_REMOTE_USER": "root", 
+    "MYSQL_REMOTE": "127.0.0.1", 
+
+    "LOGIN_EMAIL_USER": "royburns", 
+    "LOGIN_EMAIL_PASSWORD": "111", 
+    "SMTP_HOST": "127.0.0.1", 
+    "FROM_MAIL": "roy.burns@163.com", 
+    "TO_MAIL": "roy.burns@163.com", 
+    "Ali_DB": "127.0.0.1", 
+
+    "MYSQL_XGD_HOST": "127.0.0.1", 
+    "MYSQL_XGD_USER": "root", 
+    "MYSQL_XGD_PASSWORD": "111", 
+    "MYSQL_XGD_PORT": "3306", 
+    "DATA_PATH": "data", 
+    
+    "age": 24, 
+    "address": {
+        "home": "Beijing", 
+        "office": "ShangHai"
+    }
+}
