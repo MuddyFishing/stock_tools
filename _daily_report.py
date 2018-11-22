@@ -604,7 +604,7 @@ def zdf_distribution(date_zdffb, save_path_zdffb):
     # 调用pyecharts
     title = ' 涨跌分布：↑' + str(validyes0+validyes1+validyes3+validyes5+validyes7+validyes10) +  \
             ' ↓' + str(validno0+validno1+validno3+validno5+validno7+validno10) + '  →' + str(valid0)
-    subtitle = '    数据供应: 摸鱼科技'
+    subtitle = '    数据供应: 摸鱼网络'
     # bar
     bar = Bar(title, subtitle, title_pos=0.1, subtitle_text_size=15, subtitle_color='#aa8')
     # bar.use_theme("shine")
@@ -640,22 +640,28 @@ def hot_tgb(date_tgbhotstock, save_path_tgbhotstock):
     stockcode = re.findall(r'[sz,sh]{1}\d{6}', d)  # 30
     stockno = re.findall(r'<td>\d+</td>', d)        # 10
     stockhotvalue = re.findall(r'<td >\d+</td>', d)  # 20
-    stockname = re.findall(r'[\*ST,ST,\*,SST,GQY,S,N,TCL,XD,G,XR]{0,1}[\u4e00-\u9fa5]{3,4}', d)  # 10
+    stockname_ = re.findall(r'[\*ST,ST,\*,SST,GQY,S,N,TCL,XD,G,XR]{0,1}[\u4e00-\u9fa5]{2,4}', d)  # 10
     v1 = []  # 今日搜索
     v2 = []  # 最近7天搜索
     for i in range(0, len(stockhotvalue)):
-
         (x, y) = divmod(i, 2)
         if y == 0:
             v1.append(int(stockhotvalue[i].replace('<td >', "").replace('</td>', "")))
         else:
             v2.append(int(stockhotvalue[i].replace('<td >', "").replace('</td>', "")))
-    title = ' 人气妖股 - 搜索热度'
-    subtitle = '    数据供应: 摸鱼科技'
+    
+    stockname = []
+    for j in range(0, len(stockname_)):
+        # print(len(stockname[j]))
+        if len(stockname_[j]) > 2:
+            stockname.append(stockname_[j])
+
+    title = ' 搜索热度 - 人气妖股'
+    subtitle = '    数据供应: 摸鱼网络'
     bar = Bar(title, subtitle, title_pos=0.1, subtitle_text_size=15, subtitle_color='#aa8')
     # bar.use_theme("macarons")
-    bar.add("7day", stockname, v2, bar_category_gap='80%', is_stack=True)
     bar.add("today", stockname, v1, bar_category_gap='80%', is_stack=True)
+    bar.add("7day", stockname, v2, bar_category_gap='80%', is_stack=True)
     render_path = save_path_tgbhotstock[:-12] + 'hot_stock_tgb_' + date_tgbhotstock + '.png'
     bar.render(path=render_path)
     pic_zoom(render_path, save_path_tgbhotstock, 740)
@@ -690,7 +696,7 @@ def pic_ztnum_hist_pyecharts(df_ztnum_hist, pic_ztnum_hist_path, date_str_ztnum_
     # print(v22)
     # pyecharts参数
     title = ' 历史数据 - 每日涨跌停'
-    subtitle = '    数据供应: 摸鱼科技'
+    subtitle = '    数据供应: 摸鱼网络'
     bar = Bar(title, subtitle, title_pos=0.1, subtitle_text_size=15, subtitle_color='#aa8')
     # bar.use_theme("infographic")
     bar.add("涨停数", attr, v11[::-1],   mark_line=['average'])
@@ -879,8 +885,9 @@ def acq_pic_path_ths(date_wwwths_ztfp, savepath_wwwths_ztfp):
     e = requests.get(d[0].replace('stock.', 'm.'))
     f = re.findall(r'查看更多涨停[\s\S]*?\.png', e.text)
     g = re.findall(r'http[\s\S]*?\.png', f[0])
-    download_documents(g[0], 'D:\\60_openadoor\\Pictures_FastStoneCapture\\ztfp_ths' + date_wwwths_ztfp + '.png')
-    h = json_pic_data2list(date_wwwths_ztfp, pic_ocr(g[0], savepath_wwwths_ztfp, date_wwwths_ztfp))
+    h_path = 'D:\\60_openadoor\\Pictures_FastStoneCapture\\ztfp_ths' + date_wwwths_ztfp + '.png'
+    download_documents(g[0], h_path)
+    # h = json_pic_data2list(date_wwwths_ztfp, pic_ocr(g[0], savepath_wwwths_ztfp, date_wwwths_ztfp))
     # print(json_pic_data2list)
 
     j = re.findall(r'title="收评[\s\S]*?>收评', b.text)
@@ -891,7 +898,7 @@ def acq_pic_path_ths(date_wwwths_ztfp, savepath_wwwths_ztfp):
     # print([h, m])
     # print('acq_pic_from_ths done: data_list be returned...')
     print('acq_pic_path_ths done: ths 涨停复盘数据和收评数据已提取...')
-    return [h, m]
+    return [h_path, m, '']
 
 
 # 从金融界爬取两个内容，一个是《涨停复盘》的图片，一个是《收评》的分时板块异动的时间顺序
@@ -900,26 +907,27 @@ def acq_pic_path_jrj(date_wwwths_ztfp, savepath_wwwths_ztfp):
     url_www_jrj = 'http://stock.jrj.com.cn/list/ztfplist.shtml'
     b = requests.get(url_www_jrj)
 
-    c = re.findall(r'<li><span>[\s\S]*?>涨停复盘:', b.text)
-    d = re.findall(r'http[\s\S]*?html', c[0])
-    e = requests.get(d[0])
-    f = re.findall(r'涨停复盘01[\s\S]*?\.png', e.text)
-    g = re.findall(r'http[\s\S]*?\.png', f[0])
-    h_path = 'D:\\60_openadoor\\Pictures_FastStoneCapture\\ztfp_ths' + date_wwwths_ztfp + '.png'
-    download_documents(g[0], h_path)
+    # c = re.findall(r'<li><span>[\s\S]*?>涨停复盘:', b.text)
+    # d = re.findall(r'http[\s\S]*?html', c[0])
+    # e = requests.get(d[0])
+    # f = re.findall(r'涨停复盘01[\s\S]*?\.png', e.text)
+    # g = re.findall(r'http[\s\S]*?\.png', f[0])
+    # h_path = 'D:\\60_openadoor\\Pictures_FastStoneCapture\\ztfp_ths' + date_wwwths_ztfp + '.png'
+    # download_documents(g[0], h_path)
 
-    soup = BeautifulSoup(e.text, "html.parser")
-    text_div = soup.find_all("div", class_="texttit_m1")[0].text
-    text_div = text_div.replace('金融界网站讯', '摸鱼科技分析').replace('行情', '').replace(',诊股', '')
-    tmp = text_div.split()
-    # text_concolusion = re.findall(u'综合来看，[\w\W]+。', text_div)
-    # text_div = text_div.replace(u'综合来看，[\w\W]+。', '')
-    text_concolusion = tmp[-1]
-    text_div = "".join(tmp[0:-1])
-    print(text_div)
+    # soup = BeautifulSoup(e.text, "html.parser")
+    # text_div = soup.find_all("div", class_="texttit_m1")[0].text
+    # text_div = text_div.replace('金融界网站讯', '摸鱼网络资讯').replace('行情', '').replace(',诊股', '')
+    # tmp = text_div.split()
+    # # text_concolusion = re.findall(u'综合来看，[\w\W]+。', text_div)
+    # # text_div = text_div.replace(u'综合来看，[\w\W]+。', '')
+    # text_concolusion = tmp[-1]
+    # text_div = "".join(tmp[0:-1])
+    # print(text_div)
 
-    print('acq_pic_path_jrj done: ths 涨停复盘数据和收评数据已提取...')
-    return [h_path, text_div, text_concolusion]
+    # print('acq_pic_path_jrj done: ths 涨停复盘数据和收评数据已提取...')
+    # return [h_path, text_div, text_concolusion]
+    return [r'D:\60_openadoor\Pictures_FastStoneCapture\ztfp_ths20181113.png', 'hehe', 'hehe']
 
 # 从金融街获取今日涨停详细数据，和图片解析后，合并一起，生成今日涨停板块复盘图
 # http://home.flashdata2.jrj.com.cn/limitStatistic/ztForce/20180718.js
@@ -1035,30 +1043,32 @@ def to_html(date_html, save_path, list_path_pic_to_html):
     <h2><font color=red>%s</font>%s</h2>
     <p> </br></p>
 
-    <img src=%s></img>
-    <p> </br></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    <p></p>
     <p>%s</br>%s</p>
 
     <p> </br></p>
-    <img src=%s></img>
+    <div style="margin:0px auto; width: 740px; ">
+    <p> %s</p>
     <p> </br></p>
-    <img src=%s></img>
+    <p> %s</p>
     <p> </br></p>
 
-    <img src=%s></img>
     <p> </br></p>
-    <img src=%s></img>
-    <p> </br></p>
-    <img src=%s></img>
-    <p> </br></p>
-    <img src=%s></img>
-    <p> </br></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    <p></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
     
-    <div style="margin:0px auto; width: 800px; ">
-    <p> %s</p>
     <p> </br></p>
-    <p> %s</p>
-    <p> </br></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    <p></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    <p></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    <p></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    
+    
     </div>
     </div>
     
@@ -1126,6 +1136,9 @@ def to_html(date_html, save_path, list_path_pic_to_html):
         url_words_everyday,
         words_en,
         words_zh,
+        
+        text_ztfp,
+        text_ztfp_concolusion,
 
         url_detail_pv,
         url_sh000001_daily,
@@ -1133,9 +1146,7 @@ def to_html(date_html, save_path, list_path_pic_to_html):
         url_ztnum_hist,
         url_zffb,
         url_hotstock,
-        pic_ztfp,
-        text_ztfp,
-        text_ztfp_concolusion)
+        pic_ztfp)
 
     f.write(message)
     f.close()
@@ -1215,6 +1226,7 @@ if __name__ == '__main__':
     html_pic_path = pic_base_path + '2018-07-19_193746.png'
     pic_croped_html_pic_path = 'D:\\60_openadoor\\BlingBlingMoney\\wxgzh'
     ztfp = acq_pic_path_jrj(date_str_today, pic2text_json_out_path)
+    # ztfp = acq_pic_path_ths(date_str_today, pic2text_json_out_path)
     list_pic_path = [iciba(date_str_today, pic_words_everyday_iciba),  # 0.每日一图
                     crop_163_stock_picture(pic_zoom(download_documents(kline_sh000001_163_path, kline_sh000001_save_path), kline_sh000001_zoom_path, 730), kline_sh000001_zoom_path, 130),  # 1.上证指数日K图
                     pic_ztnum_hist_pyecharts(zt_hum_history('', date_str_today, 1), pic_ztnum_history_path, date_str_today),  # 2. 历史涨跌停数据
