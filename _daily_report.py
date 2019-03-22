@@ -1,4 +1,8 @@
-# encoding: UTF-8
+# -*- coding: utf-8 -*-
+# author: 微信号 pp_LoveSmile
+# author: 公众号 摸鱼大佬
+__author__ = 'Roy T.Burns'
+
 import pymongo
 from PIL import Image
 import json
@@ -15,10 +19,6 @@ import base64
 import time
 import random
 import requests
-
-__author__ = 'Roy T.Burns'
-# author: 微信号 pp_LoveSmile
-# author: 公众号 摸鱼网络
 
 from pyecharts import Bar, Pie, configure
 configure(output_image=True)
@@ -604,7 +604,7 @@ def zdf_distribution(date_zdffb, save_path_zdffb):
     # 调用pyecharts
     title = ' 涨跌分布：↑' + str(validyes0+validyes1+validyes3+validyes5+validyes7+validyes10) +  \
             ' ↓' + str(validno0+validno1+validno3+validno5+validno7+validno10) + '  →' + str(valid0)
-    subtitle = '    数据供应: 摸鱼网络'
+    subtitle = '    GZH: 摸鱼大佬'
     # bar
     bar = Bar(title, subtitle, title_pos=0.1, subtitle_text_size=15, subtitle_color='#aa8')
     # bar.use_theme("shine")
@@ -623,9 +623,9 @@ def zdf_distribution(date_zdffb, save_path_zdffb):
     pie_render_path = save_path_zdffb[:-12] + 'pie_tozoom_' + date_zdffb + '.png'
     pie.render(path=pie_render_path)
     
-    pic_zoom(bar_render_path, save_path_zdffb, 740)
-    print('zdf_distribution done: ' + save_path_zdffb)
-    return save_path_zdffb
+    # pic_zoom(bar_render_path, save_path_zdffb, 740)
+    # print('zdf_distribution done: ' + save_path_zdffb)
+    return bar_render_path
 
 
 # 163大盘分时
@@ -657,16 +657,16 @@ def hot_tgb(date_tgbhotstock, save_path_tgbhotstock):
             stockname.append(stockname_[j])
 
     title = ' 搜索热度 - 人气妖股'
-    subtitle = '    数据供应: 摸鱼网络'
+    subtitle = '    GZH: 摸鱼大佬'
     bar = Bar(title, subtitle, title_pos=0.1, subtitle_text_size=15, subtitle_color='#aa8')
     # bar.use_theme("macarons")
     bar.add("today", stockname, v1, bar_category_gap='80%', is_stack=True)
     bar.add("7day", stockname, v2, bar_category_gap='80%', is_stack=True)
     render_path = save_path_tgbhotstock[:-12] + 'hot_stock_tgb_' + date_tgbhotstock + '.png'
     bar.render(path=render_path)
-    pic_zoom(render_path, save_path_tgbhotstock, 740)
-    print('pic_ztnum_hist_pyecharts done: ' + save_path_tgbhotstock)
-    return save_path_tgbhotstock
+    # pic_zoom(render_path, save_path_tgbhotstock, 740)
+    # print('hot_tgb done: ' + save_path_tgbhotstock)
+    return render_path
 
 
 # 根据zt_hum_history函数返回的df数据，提取历史涨停数据生成图片
@@ -676,8 +676,9 @@ def pic_ztnum_hist_pyecharts(df_ztnum_hist, pic_ztnum_hist_path, date_str_ztnum_
     ztnum = df_ztnum_hist.head(21)
 
     # 提取月份
-    month = (ztnum.iloc[:, 0].str[4:8])
-    month = np.sort(month.map(lambda c: c))
+    # month = (ztnum.iloc[:, 0].str[4:8])
+    month = (ztnum.iloc[:, 0].str[0:8]) #如果是2019年01月，这里排序就会出问题，
+    month = np.sort(month.map(lambda c: c)) 
     attr = ['{}'.format(i) for i in month]
 
     # 切片
@@ -685,27 +686,27 @@ def pic_ztnum_hist_pyecharts(df_ztnum_hist, pic_ztnum_hist_path, date_str_ztnum_
     # v1 = ['{}'.format(i) for i in v1.values]
     v11 = []
     for x in v1:
-        a = min(100, int(x))
+        a = min(10000, int(x))
         v11.append(a)
     v22 = []
     v2 = ztnum.iloc[:, 3]
     for x in v2:
-        a = min(100, int(x))
+        a = min(10000, int(x))
         v22.append(a)
     # print(v11)
     # print(v22)
     # pyecharts参数
     title = ' 历史数据 - 每日涨跌停'
-    subtitle = '    数据供应: 摸鱼网络'
+    subtitle = '    GZH: 摸鱼大佬'
     bar = Bar(title, subtitle, title_pos=0.1, subtitle_text_size=15, subtitle_color='#aa8')
     # bar.use_theme("infographic")
     bar.add("涨停数", attr, v11[::-1],   mark_line=['average'])
     bar.add("跌停数", attr, v22[::-1],   mark_line=['average'])
     render_path = pic_ztnum_hist_path[:-12] + 'tozoom_' + date_str_ztnum_hist + '.png'
     bar.render(path=render_path)
-    pic_zoom(render_path, pic_ztnum_hist_path, 740)
-    print('pic_ztnum_hist_pyecharts done: ' + pic_ztnum_hist_path)
-    return pic_ztnum_hist_path
+    # pic_zoom(render_path, pic_ztnum_hist_path, 740)
+    # print('pic_ztnum_hist_pyecharts done: ' + pic_ztnum_hist_path)
+    return render_path
 
 
 # 历史涨跌停数量，最近一个月的,递归算法
@@ -1076,66 +1077,53 @@ def to_html(date_html, save_path, list_path_pic_to_html):
 </html>
 """
 
-#     message = """
-# <html>
-#     <head>
-#     </head>
+    html_tmp= """
+<html>
+    <head>
+    </head>
+
+    <body align=middle>
+    <div>
+    <h2><font color=red>%s</font>%s</h2>
+    <p> </br></p>
+
+    <p> </br></p>
+    <div style="margin:0px auto; width: 740px; ">
+    <p> %s</p>
+    <p> </br></p>
+    <p> %s</p>
+    <p> </br></p>
+
+    <p> </br></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    <p></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
     
-#     <body align=middle>
-#         <h2><font color=red>%s</font>%s</h2>
-#         <p> </br></p>
-
-#         <img src=%s></img>
-#         <p> </br></p>
-#         <p>%s</br>%s</p>
-
-#         <p> </br></p>
-#         <img src=%s></img>
-#         <p> </br></p>
-#         <img src=%s></img>
-#         <p> </br></p>
-
-#         <img src=%s></img>
-#         <p> </br></p>
-#         <img src=%s></img>
-#         <p> </br></p>
-#         <img src=%s></img>
-#         <p> </br></p>
-#         <img src=%s></img>
-#         <p> </br></p>
-#         <p> %s</p>
-#         <p> </br></p>
-#         <p> %s</p>
-#         <p> </br></p>
-
-#     </body>
-# </html>
-#     """ % (
-#         title_date,
-#         title_fpan,
-
-#         url_words_everyday,
-#         words_en,
-#         words_zh,
-
-#         url_detail_pv,
-#         url_sh000001_daily,
-
-#         url_ztnum_hist,
-#         url_zffb,
-#         url_hotstock,
-#         pic_ztfp,
-#         text_ztfp,
-#         text_ztfp_concolusion)
+    <p> </br></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    <p></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    <p></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    <p></p>
+    <img style="margin:0px auto; width: 740px; " src=%s></img>
+    
+    
+    </div>
+    </div>
+    
+    </body>
+</html>
+"""
 
     message = html_tmp % \
         (
         title_date,
         title_fpan,
 
-        url_words_everyday,
-        words_en,
-        words_zh,
+        # url_words_everyday,
+        # words_en,
+        # words_zh,
         
         text_ztfp,
         text_ztfp_concolusion,
@@ -1209,6 +1197,10 @@ def crop_html_picture(date_crop_html_pic, picture_path, save_path_crop_pic):
 
 if __name__ == '__main__':
     date_str_today = last_trade_date()  # 20180713
+    # date_str_today = '20190304'
+    date_str_today = time.strftime("%Y%m%d", time.localtime()) 
+    print(date_str_today)
+    
     pic_base_path = 'D:\\60_openadoor\\Pictures_FastStoneCapture\\'
     html_save_path = 'D:\\60_openadoor\\BlingBlingMoney\\CheckEveryday' + date_str_today + '.html'
     pic_words_everyday_iciba = pic_base_path + 'iciba_everyday_' + date_str_today + '.jpg'
