@@ -12,7 +12,7 @@ full_name = os.path.join(dirname,'alert_me_{}.log'.format(datetime.date.today())
 logger = llogger(full_name)
 
 # 循环检测时间
-LOOP_TIME = 80
+LOOP_TIME = 60
 EXECEPTION_TIME = 20
 MARKET_OPENING = 0
 # ALERT_PERCENTAGE = 3
@@ -149,7 +149,7 @@ class ReachTarget():
 
                 if len(ret_dt) > 0:
 
-                    # 提醒一次后，下一次的间隔为5分钟后
+                    # 提醒一次后，下一次的间隔为DELTA_TIME分钟后
                     # sent_list = []
                     for i in ret_dt['code']:
 
@@ -219,14 +219,14 @@ class ReachTarget():
                         ret_dt1['溢价率']=yjl_list
                         # ret_dt1 = ret_dt1.set_index('code', drop=True)
 
-
+                        code=j
                         name = ret_dt1['名称'].values[0]
                         price = ret_dt1['price'].values[0]
                         bid = ret_dt1['bid1'].values[0]
                         ask = ret_dt1['ask1'].values[0]
                         diff = round(ret_dt1['diff'].values[0],2)
                         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        content0 = '{t}\n{name}:价格:{price} 买1:{bid} 卖1:{ask}差价:{diff}'.format(name=name, price=price,
+                        content0 = '{t}\n{code}::{name}:价格:{price} 买1:{bid} 卖1:{ask}差价:{diff}'.format(code=code,name=name, price=price,
                                                                                               bid=bid, ask=ask,
                                                                                               diff=diff, t=now)
                         logger.info(content0)
