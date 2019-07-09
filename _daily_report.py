@@ -418,7 +418,7 @@ def excel_generate(date_eg):
     xls.set_cell('今日', 7, 1, '    ' + '市场总览:')
     xls.set_cell('今日', 8, 1, '    ' + words_everyday_mongodb['note'])
 
-    xls.save("D:\\60_openadoor\BlingBlingMoney\\" + date_eg + '.xlsx')
+    xls.save(r"D:\60_openadoor\BlingBlingMoney\\" + date_eg + '.xlsx')
     xls.close()
 
 
@@ -1005,23 +1005,23 @@ def data2pic_ths_ztfp_sp(date_data2pic, savepath_data2pic, data2pic, data2jrjapi
 def to_html(date_html, save_path, list_path_pic_to_html):
 
     # 连接数据库读取文章内容
-    client = pymongo.MongoClient(host='localhost', port=27017)
-    db = client['openadoor']
-    collection = db['wwwWordsEveryday']
-    words_everyday_mongodb = collection.find_one({"date":  date_html})
-    client.close()
+    # client = pymongo.MongoClient(host='localhost', port=27017)
+    # db = client['openadoor']
+    # collection = db['wwwWordsEveryday']
+    # words_everyday_mongodb = collection.find_one({"date":  date_html})
+    # client.close()
 
     # 标题栏日期红色显示
     title_date = '【' + date_html[:] + '】'
     # 标题栏内容
     title_fpan = '今日股市股票行情'
     # 每日一句英语
-    words_en = words_everyday_mongodb['content']
+    # words_en = words_everyday_mongodb['content']
     # 每日一句翻译
-    words_zh = words_everyday_mongodb['note']
+    # words_zh = words_everyday_mongodb['note']
     # 每日一句配图，压缩成和上证日K一样的尺寸
     # url_words_everyday = list_path_pic_to_html[0]
-    url_words_everyday = words_everyday_mongodb['picture2']
+    # url_words_everyday = words_everyday_mongodb['picture2']
 
     # 上证今日K线，共有30根K线
     url_sh000001_daily = list_path_pic_to_html[1]
@@ -1219,7 +1219,7 @@ if __name__ == '__main__':
     pic_croped_html_pic_path = 'D:\\60_openadoor\\BlingBlingMoney\\wxgzh'
     ztfp = acq_pic_path_jrj(date_str_today, pic2text_json_out_path)
     # ztfp = acq_pic_path_ths(date_str_today, pic2text_json_out_path)
-    list_pic_path = [iciba(date_str_today, pic_words_everyday_iciba),  # 0.每日一图
+    list_pic_path = [ '', #iciba(date_str_today, pic_words_everyday_iciba),  # 0.每日一图
                     crop_163_stock_picture(pic_zoom(download_documents(kline_sh000001_163_path, kline_sh000001_save_path), kline_sh000001_zoom_path, 730), kline_sh000001_zoom_path, 130),  # 1.上证指数日K图
                     pic_ztnum_hist_pyecharts(zt_hum_history('', date_str_today, 1), pic_ztnum_history_path, date_str_today),  # 2. 历史涨跌停数据
                     zdf_distribution(date_str_today, pic_zdffb_path),  # 3.每日涨跌幅分布图片
