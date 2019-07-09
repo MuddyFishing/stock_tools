@@ -50,16 +50,16 @@ class MailSend():
             self.smtp.sendmail(self.msg['from'], self.msg['to'], self.msg.as_string())
             self.smtp.quit()
             print("sent")
-        except smtplib.SMTPException, e:
+        except smtplib.SMTPException as e:
             print(e)
             return 0
 
 def push_wechat(name, real_price, real_percent, type):
-    name=u'wwwei'
+    name='wwwei'
     itchat.auto_login(hotReload=True)
     account=itchat.get_friends(name)
     for i in account:
-        if i[u'PYQuanPin']==name:
+        if i['PYQuanPin']==name:
             toName=i['UserName']
     content=name+' ' + str(real_price)+' '+ str(real_percent)+' percent '+ type
     itchat.send(content,toUserName=toName)

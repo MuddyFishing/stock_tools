@@ -4,11 +4,16 @@ import datetime
 import time
 
 __author__ = 'Rocky'
+'''
+http://30daydo.com
+Contact: weigesysu@qq.com
+'''
 import tushare as ts
 import os
 from setting import get_engine,llogger,is_holiday,DATA_PATH
 import pandas as pd
-logger=llogger('collect_data.log')
+filename=os.path.basename(__file__)
+logger = llogger('log/'+filename)
 
 class SaveData():
     today = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -82,8 +87,6 @@ def main():
     obj.basic_info()
 
 if __name__=='__main__':
-    if is_holiday():
-        logger.info("Holidy")
-        exit()
+
     main()
     logger.info('完成')
