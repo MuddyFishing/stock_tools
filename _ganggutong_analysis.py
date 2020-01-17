@@ -6,6 +6,7 @@ __author__ = 'Roy T.Burns'
 import pymongo
 from PIL import Image
 import json
+import re
 import tushare as ts
 import time, datetime
 import random
@@ -19,16 +20,16 @@ from selenium.webdriver.chrome.options import Options
 chrome_options = Options()
 chrome_options.add_argument('--headless')
 chrome_options.add_argument('--disable-gpu')
-driver = webdriver.Chrome(chrome_options=chrome_options)
+driver = webdriver.Chrome(options=chrome_options)
 
 import tushare as ts
 # ts.set_token('your token here')
 pro = ts.pro_api()
 
-from pyecharts import Line, Bar, Pie, configure, Overlap
-configure(output_image=True)
+from pyecharts import Line, Bar, Pie, configure, Overlap, Page
+# configure(output_image=True)
 
-save_path = 'D:\\tools\\'
+save_path = 'E:\\temp\\'
 
 
 # stock index amount
@@ -63,12 +64,13 @@ def moneyflow_a_stock_all(date_start, date_end, save_path_moneyflow_ggt=''):
     overlap = Overlap()
     overlap.add(bar)
     overlap.add(line, is_add_xaxis=False)  #是否新增一个 x 坐标轴，默认为 False
-    render_path = save_path + 'moneyflow_a_stock_all_' + date_end + '.png'
+    # render_path = save_path + 'moneyflow_a_stock_all_' + date_end + '.png'
+    render_path = save_path + 'moneyflow_a_stock_all_' + date_end + '.html'
     # bar.render(path=render_path)
-    overlap.render(path=render_path)
+    # overlap.render(path=render_path)
     # pic_zoom(render_path, save_path_tgbhotstock, 740)
     print('moneyflow_ggt done: ' + render_path)
-    return render_path
+    return render_path, overlap
 
 
 # moneyflow_hsgt
@@ -89,12 +91,13 @@ def moneyflow_lgt(date_start, date_end, df, save_path_moneyflow_lgt):
     overlap = Overlap()
     overlap.add(bar)
     overlap.add(line, is_add_xaxis=False)  #是否新增一个 x 坐标轴，默认为 False
-    render_path = save_path + 'moneyflow_lgt_' + date_end + '.png'
+    # render_path = save_path + 'moneyflow_lgt_' + date_end + '.png'
+    render_path = save_path + 'moneyflow_lgt_' + date_end + '.html'
     # bar.render(path=render_path)
-    overlap.render(path=render_path)
+    # overlap.render(path=render_path)
     # pic_zoom(render_path, save_path_tgbhotstock, 740)
     print('moneyflow_lgt done: ' + render_path)
-    return render_path
+    return render_path, overlap
 
 
 # moneyflow_hsgt
@@ -115,12 +118,13 @@ def moneyflow_ggt(date_start, date_end, df, save_path_moneyflow_ggt):
     overlap = Overlap()
     overlap.add(bar)
     overlap.add(line, is_add_xaxis=False)  #是否新增一个 x 坐标轴，默认为 False
-    render_path = save_path + 'moneyflow_ggt_' + date_end + '.png'
+    # render_path = save_path + 'moneyflow_ggt_' + date_end + '.png'
+    render_path = save_path + 'moneyflow_ggt_' + date_end + '.html'
     # bar.render(path=render_path)
-    overlap.render(path=render_path)
+    # overlap.render(path=render_path)
     # pic_zoom(render_path, save_path_tgbhotstock, 740)
     print('moneyflow_ggt done: ' + render_path)
-    return render_path
+    return render_path, overlap
 
 
 def get_float(x):
@@ -184,6 +188,279 @@ def get_moneyflow_hsgt_today(browser, trade_date):
     return tab_dict, tab_list
 
 
+# 根据zt_hum_history函数返回的df数据，提取历史涨停数据生成图片
+def zt_hum_history_render(df_ztnum_hist, pic_ztnum_hist_path, date_str_ztnum_hist):
+
+    # 为什么取最前的21天的数据，因为和历史K线每月有21根，相对应
+    ztnum = df_ztnum_hist.head(21)
+
+    # 提取月份
+    # month = (ztnum.iloc[:, 0].str[4:8])
+    month = (ztnum.iloc[:, 0].str[0:8]) #如果是2019年01月，这里排序就会出问题，
+    month = np.sort(month.map(lambda c: c)) 
+    attr = ['{}'.format(i) for i in month]
+
+    # 切片
+    v1 = ztnum.iloc[:, 1]
+    # v1 = ['{}'.format(i) for i in v1.values]
+    v11 = []
+    for x in v1:
+        a = min(10000, int(x))
+        v11.append(a)
+    v22 = []
+    v2 = ztnum.iloc[:, 3]
+    for x in v2:
+        a = min(10000, int(x))
+        v22.append(a)
+    # print(v11)
+    # print(v22)
+    # pyecharts参数
+    title = ' 历史数据 - 每日涨跌停'
+    subtitle = '    GZH: 摸鱼大佬'
+    bar = Bar(title, subtitle, title_pos=0.1, subtitle_text_size=15, subtitle_color='#aa8')
+    # bar.use_theme("infographic")
+    bar.add("涨停数", attr, v11[::-1],   mark_line=['average'])
+    bar.add("跌停数", attr, v22[::-1],   mark_line=['average'])
+    render_path = pic_ztnum_hist_path[:-12] + 'tozoom_' + date_str_ztnum_hist + '.png'
+    # bar.render(path=render_path)
+    # pic_zoom(render_path, pic_ztnum_hist_path, 740)
+    # print('zt_hum_history_render done: ' + pic_ztnum_hist_path)
+    return render_path, bar
+
+
+# 历史涨跌停数量，最近一个月的,递归算法
+# api = 'http://home.flashdata2.jrj.com.cn/limitStatistic/month/201807.js'
+def zt_hum_history(zt_his_text, date_zt_his, zt_next_num):
+
+    # 如果递归数字<0，那就终止递归 return df，此处是统计数据
+    # 第一次递归的zt_his_text=''是空的，逐步延长，最后一次递归统计此字符串
+    if zt_next_num < 0:
+        zt_np = []
+        # 分割，提取，循环append成list
+        zt_list = re.split(r'],\[', zt_his_text[1:-2])
+        for j in range(0, len(zt_list), 1):
+            zt_list_one = re.split(r',', zt_list[j])
+            for k in range(0, len(zt_list_one), 1):
+                if len(zt_list_one[k]) == 0:
+                    zt_list_one[k] = 0
+                zt_np.append(zt_list_one[k])
+        # 转成数组，转成矩阵，转成df
+        zt_np = np.array(zt_np)
+        matrix = [[0 for p in range(0, len(zt_list_one), 1)] for q in range(0, len(zt_list), 1)]
+        for m in range(0, len(zt_np)):
+            a, b = divmod(m, 7)
+            matrix[a][b] = zt_np[m]  # 将切分后的数据存入df中
+            # print(a, b, matrix[a][b])
+        df = pd.DataFrame(matrix, columns=pd.MultiIndex.from_product([['date', 'ztnum', 'ztnumcmp', 'dtnum', 'dtnumcmp',  'cash', 'cashcmp']]))
+        print('zt_hum_history done: df数据已生成')
+        return df
+
+    month0 = int(date_zt_his[4:6])
+    year0 = int(date_zt_his[0:4])
+    month0url = date_zt_his[0:6]
+    month0_data_tmp = requests.get('http://home.flashdata2.jrj.com.cn/limitStatistic/month/' + month0url + '.js')
+    month0_data = month0_data_tmp.text
+    month0_split1 = re.split(r'\[\[', month0_data)
+    month0_split2 = re.split(r']]', month0_split1[1])
+    if month0-1 == 0:
+        month1 = 12
+        year1 = year0-1
+    else:
+        month1 = month0-1
+        year1 = year0
+    month0_data_list = zt_his_text + '[' + month0_split2[0] + '],'
+    zt_next_num -= 1
+    print('zt_hum_history done: 还需递归次数 ' + str(zt_next_num + 1))
+    return zt_hum_history(month0_data_list, str(year1) + str(month1).zfill(2), zt_next_num)
+
+
+# tushare获取当日涨跌幅分布,返回各段数据[10,>7,>5>3>1>-1>-3>-5>-7>-10,-10]
+def zd_fenbu():
+    # tushare
+    stockbasicinfo = ts.get_stock_basics()
+
+    '''代码排序'''
+    stockbasicinfo = stockbasicinfo.sort_index()
+
+    '''股票总数'''
+    stocknum = len(stockbasicinfo)
+    # stockcode = stockbasicinfo.index[0]
+
+    # 所有票的url拼接地址，用sina api去获取数据，因为tushare获取实时数据不稳定
+    urllist = []
+    for i in range(0, stocknum):
+        stockcode = stockbasicinfo.index[i]
+        stockcodeint = int(stockbasicinfo.index[i])
+        if stockcodeint >= 600000:
+            urllist.append('sh' + str(stockcode))
+        else:
+            urllist.append('sz' + str(stockcode))
+    urllen = len(urllist)
+    # print(urllen, urllist)
+    (x, y) = divmod(urllen, 9)
+    urlchar = ','.join(urllist)
+    # print(urlchar)
+    # 总共分成9份，因为sina每次请求不超过800
+    urlbase = 'http://hq.sinajs.cn/list='
+    url1 = urlbase + urlchar[0:9*x-1]
+    url2 = urlbase + urlchar[9*x*1:9*x*2-1]
+    url3 = urlbase + urlchar[9*x*2:9*x*3-1]
+    url4 = urlbase + urlchar[9*x*3:9*x*4-1]
+    url5 = urlbase + urlchar[9*x*4:9*x*5-1]
+    url6 = urlbase + urlchar[9*x*5:9*x*6-1]
+    url7 = urlbase + urlchar[9*x*6:9*x*7-1]
+    url8 = urlbase + urlchar[9*x*7:9*x*8-1]
+    url9 = urlbase + urlchar[9*x*8:]
+    datatemp1 = requests.get(url1)
+    datatemp2 = requests.get(url2)
+    datatemp3 = requests.get(url3)
+    datatemp4 = requests.get(url4)
+    datatemp5 = requests.get(url5)
+    datatemp6 = requests.get(url6)
+    datatemp7 = requests.get(url7)
+    datatemp8 = requests.get(url8)
+    datatemp9 = requests.get(url9)
+    # 获取的数据进行合并
+    urldata = datatemp1.text + datatemp2.text + datatemp3.text + datatemp4.text + datatemp5.text + datatemp6.text + datatemp7.text + datatemp8.text + datatemp9.text
+    urlsplit = re.split(r'=', urldata)
+    # print(len(urlsplit))
+    validnum = 0
+    validzflist = []
+    validyes10 = 0
+    validyes7 = 0
+    validyes5 = 0
+    validyes3 = 0
+    validyes1 = 0
+    validyes0 = 0
+    valid0 = 0
+    validno0 = 0
+    validno1 = 0
+    validno3 = 0
+    validno5 = 0
+    validno7 = 0
+    validno10 = 0
+    # 数据分割，提取，整理
+    for i in range(1, len(urlsplit)):
+        if len(urlsplit[i]) > 100:
+            urldataone = re.split(r',', urlsplit[i])
+            yesprice = float(urldataone[2])
+            nowprice = float(urldataone[3])
+            amount = float(urldataone[9])
+            buyonevol = float(urldataone[10])
+            sellonevol = float(urldataone[20])
+            if amount < 0.1:
+                pass
+            else:
+                if nowprice < 0.1:
+                    pass
+                else:
+                    if yesprice < 0.1:
+                        pass
+                    else:
+                        zdf = int(10000*(nowprice/yesprice - 1) + 0.5)/100
+                        if abs(zdf) < 11:
+                            validnum += 1
+                            validzflist.append(zdf)
+                            if zdf >= 9.8 and sellonevol < 0.1:
+                                validyes10 += 1
+                            if zdf >= 7 and sellonevol > 0.1:
+                                validyes7 += 1
+                            if 5 <= zdf < 7:
+                                validyes5 += 1
+                            if 3 <= zdf < 5:
+                                validyes3 += 1
+                            if 1 <= zdf < 3:
+                                validyes1 += 1
+                            if 0.0001 <= zdf < 1:
+                                validyes0 += 1
+                            if abs(zdf) <= 0.0001:
+                                valid0 += 1
+                            if -1 < zdf < -0.0001:
+                                validno0 += 1
+                            if -3 < zdf <= -1:
+                                validno1 += 1
+                            if -5 < zdf <= -3:
+                                validno3 += 1
+                            if -7 < zdf <= -5:
+                                validno5 += 1
+                            if zdf <= -7 and buyonevol > 0.1:
+                                validno7 += 1
+                            if zdf <= -9.8 and buyonevol < 0.1:
+                                validno10 += 1
+    # 数据整理
+    v11 = [0, 0, 0, 0, 0, 0, 0, validyes0, validyes1, validyes3, validyes5, validyes7, 0]
+    v22 = [0, validno7, validno5, validno3, validno1, validno0, 0, 0, 0, 0, 0, 0, 0]
+    v00 = [0, 0, 0, 0, 0, 0, valid0, 0, 0, 0, 0, 0, 0]
+    vzt = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, validyes10]
+    vdt = [validno10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    attr = ['-10%', '>-7%', '-7~5%', '-5~3%', '-3~1%', '-1~0%', '0', '0~1%', '1~3%', '3~5%', '5~7%', '>7%', '10%']
+
+    # 调用pyecharts
+    title = ' 涨跌分布：↑' + str(validyes0+validyes1+validyes3+validyes5+validyes7+validyes10) +  \
+            ' ↓' + str(validno0+validno1+validno3+validno5+validno7+validno10) + '  →' + str(valid0)
+    subtitle = '    GZH: 摸鱼大佬'
+    # bar
+    bar = Bar(title, subtitle, title_pos=0.1, subtitle_text_size=15, subtitle_color='#aa8')
+    # bar.use_theme("shine")
+    bar.add("涨", attr, v11, bar_category_gap=0, mark_point=['max', 'average'])
+    bar.add("", attr, vzt, bar_category_gap=0, mark_point=['max'])
+    bar.add("平", attr, v00, bar_category_gap=0, mark_point=['max'])
+    bar.add("跌", attr, v22, bar_category_gap=0, mark_point=['max', 'average'])
+    bar.add("", attr, vdt,  bar_category_gap=0, mark_point=['max'])
+    # bar_render_path = save_path_zdffb[:-12] + 'bar_tozoom_' + date_zdffb + '.png'
+    # bar.render(path=bar_render_path)
+    # pie
+    attrpie = ['涨', '平', '跌']
+    vpie = [validyes0+validyes1+validyes3+validyes5+validyes7+validyes10,valid0, validno0+validno1+validno3+validno5+validno7+validno10]
+    pie = Pie("涨跌饼图", title_pos='center', width=400, height=400)
+    pie.add("", attrpie, vpie, radius=[6, 15], label_text_color=None, is_label_show=True, legend_orient='vertical', legend_pos='left')
+    # pie_render_path = save_path_zdffb[:-12] + 'pie_tozoom_' + date_zdffb + '.png'
+    # pie.render(path=pie_render_path)
+    
+    # pic_zoom(bar_render_path, save_path_zdffb, 740)
+    # print('zdf_distribution done: ' + save_path_zdffb)
+    # return bar_render_path
+    return bar, pie
+
+
+# 弹股吧 搜索热度
+def hot_tgb(date_tgbhotstock, save_path_tgbhotstock):
+    a = requests.get('https://www.taoguba.com.cn/hotPop')
+    b = a.text.split('相关链接')
+    c = b[1].split('24小时个股搜索热度')
+    d = c[0]
+    # stockcode = re.findall(r'[sz,sh]{1}\d{6}', d)  # 30
+    # stockno = re.findall(r'<td>\d+</td>', d)        # 10
+    stockhotvalue = re.findall(r'<td >\d+</td>', d)  # 20
+    stockname_ = re.findall(r'[\*ST,ST,\*,SST,GQY,S,N,TCL,XD,G,XR]{0,1}[\u4e00-\u9fa5]{2,4}', d)  # 10
+    v1 = []  # 今日搜索
+    v2 = []  # 最近7天搜索
+    for i in range(0, len(stockhotvalue)):
+        (x, y) = divmod(i, 2)
+        if y == 0:
+            v1.append(int(stockhotvalue[i].replace('<td >', "").replace('</td>', "")))
+        else:
+            v2.append(int(stockhotvalue[i].replace('<td >', "").replace('</td>', "")))
+    
+    stockname = []
+    for j in range(0, len(stockname_)):
+        # print(len(stockname[j]))
+        if len(stockname_[j]) > 2:
+            stockname.append(stockname_[j])
+
+    title = ' 搜索热度 - 人气妖股'
+    subtitle = '    GZH: 摸鱼大佬'
+    bar = Bar(title, subtitle, title_pos=0.1, subtitle_text_size=15, subtitle_color='#aa8')
+    # bar.use_theme("macarons")
+    bar.add("today", stockname, v1, bar_category_gap='80%', is_stack=True)
+    bar.add("7day", stockname, v2, bar_category_gap='80%', is_stack=True)
+    render_path = save_path_tgbhotstock[:-12] + 'hot_stock_tgb_' + date_tgbhotstock + '.png'
+    # bar.render(path=render_path)
+    # pic_zoom(render_path, save_path_tgbhotstock, 740)
+    # print('hot_tgb done: ' + save_path_tgbhotstock)
+    return render_path, bar
+
+
 if __name__ == '__main__':
     
     now_time = datetime.datetime.now()
@@ -208,9 +485,31 @@ if __name__ == '__main__':
     df = df.append(temp1, ignore_index=True)
     print(df)
 
-    moneyflow_lgt(date_start, date_last_trade_day, df, '')
-    moneyflow_ggt(date_start, date_last_trade_day, df, '')
+    _, overlap_1 = moneyflow_lgt(date_start, date_last_trade_day, df, '')
+    _, overlap_2 = moneyflow_ggt(date_start, date_last_trade_day, df, '')
+    _, overlap_3 = moneyflow_a_stock_all(date_start=date_start, date_end=date_last_trade_day)
+    
+    _, bar_1 = zt_hum_history_render(zt_hum_history('', date_last_trade_day, 1), './', date_last_trade_day)
+    bar_2, pie_2 = zd_fenbu()
+    # _, bar_3 = hot_tgb(date_last_trade_day, './')
 
-    moneyflow_a_stock_all(date_start=date_start, date_end=date_last_trade_day)
+    # 
+    page = Page()
+    page.add(overlap_3)
+    page.add(overlap_1)
+    page.add(overlap_2)
+    
+    page.add(bar_1)
+    page.add(bar_2)
+    page.add(pie_2)
+    # page.add(bar_3)
+
+    page.render(save_path + "daily_report_%s.html" % date_last_trade_day)
 
     print('Done!')
+
+    # from pyecharts import Bar
+    # bar = Bar("我的第一个图表", "这里是副标题")
+    # bar.add("服装", ["衬衫", "羊毛衫", "雪纺衫", "裤子", "高跟鞋", "袜子"], [5, 20, 36, 10, 75, 90])
+    # bar.show_config()
+    # bar.render(save_path + 'xxx.png')
